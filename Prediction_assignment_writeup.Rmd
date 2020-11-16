@@ -1,0 +1,101 @@
+---
+title: "Prediction assignment writeup"
+author: "Carlos Andres Pillajo"
+date: "11/16/2020"
+output: 
+  html_document: default
+  pdf_document: default
+---
+
+## Overview
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+
+In this project, using the data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+The objective of this report is to demonstrate the process employed to arrive at a prediction algorithm, which aims to classify the manner in which the participants employed certain exercises. The data comes from accelerometers attached on the belt, forearm and dumbells.
+
+### Model building
+The outcome variable is class, a 5 level of factor variable. 
+In this dataset, participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in 5 different fashion: 
+
+* Class A - exactly according to the specification
+* Class B - throwing the elbows to the front
+* Class C- lifting the dumbbell only halfway 
+* Class D - lowering the dumbbell only halfway
+* Class E - throwing the hips to the front. 
+
+Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes. 
+
+1. Decision tree will be used to create the model. 
+2. After the model have been developed. Cross-validation will be performed. 
+3. Two set of data will be created, original training data set (75%) and subtesting data set (25%). 
+
+```{r echo=FALSE, warning=FALSE, cache=TRUE}
+# load needed library
+library(caret)
+library(knitr)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+```
+
+### Load Dataset
+
+```{r warning=FALSE, cache=TRUE}
+set.seed(100)
+trainingData <- read.csv("training.csv", na.strings = c("NA", "#DIV/0!", ""))
+testingData <- read.csv("testing.csv", na.strings = c("NA", "#DIV/0!", ""))
+trainingData <- trainingData[, colSums(is.na(trainingData)) == 0]
+testingData <- testingData[, colSums(is.na(testingData)) == 0]
+# Delete variables that are not related 
+trainingData <- trainingData[, -c(1:7)]
+testingData <- testingData[, -c(1:7)]
+```
+
+### Cross Validation
+
+Split the training data in training data set (75%) and testing data set (25%) 
+
+```{r warning=FALSE, cache=TRUE}
+traningPartitionData <- createDataPartition(trainingData$classe,  p = 0.75, list = F)
+trainingDataSet <- trainingData[traningPartitionData, ]
+testingDataSet <- trainingData[-traningPartitionData, ]
+dim(trainingData)
+dim(testingDataSet)
+```
+
+#### Prediction model 1 - Decision Tree
+
+```{r warning=FALSE, cache=TRUE, fig.width=15, fig.height=9, fig.align="center"}
+decisionTreeModel <- rpart(classe ~ ., data = trainingDataSet, method = "class")
+decisionTreePrediction <- predict(decisionTreeModel, testingDataSet, type = "class")
+rpart.plot(decisionTreeModel, main = "Training Decision Tree",cex=0.6, under = TRUE, faclen = 0, compress=TRUE, type = 3, clip.right.labs = FALSE, under.cex = 0.6, cex.main = 2, round = 0, branch.lwd = 2, branch.col = "blue")
+```
+
+##### Estimate the errors of the prediction algorithm in the Decision Tree model
+```{r warning=FALSE, cache=TRUE}
+confusionMatrix(factor(decisionTreePrediction), factor(testingDataSet$classe))
+```
+
+#### Prediction model 2 - Random Forest
+
+```{r warning=FALSE, cache=TRUE}
+randomForestModel <- randomForest(factor(classe) ~. , data = trainingDataSet, method = "class")
+randomForestPrediction <- predict(randomForestModel, testingDataSet, type = "class")
+```
+##### Estimate the errors of the prediction algorithm in the Random Forest
+```{r warning=FALSE, cache=TRUE}
+confusionMatrix(factor(randomForestPrediction), factor(testingDataSet$classe))
+```
+
+### Conclusion
+From the results,  Random Forest accuracy is higher than Decision tree which is 0.9963  > 0.7412. Therefore, we will use random forest to answer the assignment. 
+
+### Final Prediction
+```{r warning=FALSE, cache=TRUE}
+FinalPrediction <- predict(randomForestModel, testingData, type = "class")
+FinalPrediction
+
+```
+
