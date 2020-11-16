@@ -3,8 +3,13 @@ title: "Prediction assignment writeup"
 author: "Carlos Andres Pillajo"
 date: "11/16/2020"
 output: 
+<<<<<<< HEAD
   html_document: default
   pdf_document: default
+=======
+  pdf_document: default
+  html_document: default
+>>>>>>> 6861c02a50d9bb748cd0649b8eef5d80596485a8
 ---
 
 ## Overview
